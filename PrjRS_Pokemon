@@ -1,0 +1,103 @@
+#KNN classification
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import NearestNeighbors #FOR KNN MODEL
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+from tabulate import tabulate
+pdtabulate=lambda df:tabulate(df,headers='keys')  #for displaying columns nicely :-) with print(pdtabulate(df))
+
+from matplotlib.patches import ConnectionPatch
+pd.set_option('display.max_columns', None)   #pour afficher toutes les colonnes
+
+
+df_pokemon = pd.read_csv("pokemon.csv", delimiter=',')
+
+df_pokemon.shape, df_pokemon.columns
+
+#pbl avec Giratina plus bas. Recherche de Giratina :
+mask=df_pokemon['Name']>'Gi'
+df_pokemon[mask].sort_values('Name').head(6)
+
+"""# KNN with Scikit-Learn
+
+Mewtwo, Lugia, Rayquaza, Giratina, Dialga, and Palkia
+
+## 1 Implement the k-NN algorithm using the kaggle Pokemon dataset.
+"""
+
+# On prend le modèle KNN Classifier avec k=5 et les paramètres de base (notamment avec une distance euclidienne (minkowski et p=2)) 
+my_KNN_model = NearestNeighbors(n_neighbors=5, 
+                                radius=1.0, 
+                                algorithm='auto', 
+                                leaf_size=30, 
+                                metric='minkowski', 
+                                p=2, 
+                                metric_params=None, 
+                                n_jobs=None)
+
+my_KNN_model
+
+"""### Explain how you chose the number of neighbours (k).
+
+Choix arbitraire. Ici 5. Mais cela ne change pas la distance calculée et donc les pokemons restitués par .Neighbors pour la recommandation.
+
+## Model fitting
+
+Use the k-NN algorithm to find the Pokémon closest to each of the legendary Pokémon they're used to using.
+"""
+
+#Le fitting se fait sur les données numériques et sur les pokemon NON LEGENDAIRES pour pouvoir recommander des non légendaires
+df_pokemon_non_lgd = df_pokemon[df_pokemon['Legendary']==False]
+
+my_KNN_model.fit(df_pokemon_non_lgd[['HP','Attack','Defense','Sp. Atk','Sp. Def','Speed']])
+
+print(my_KNN_model)
+
+"""## Making recommendation
+
+Make Pokémon recommendations for the champion to use.
+"""
+
+pokemon_used = ['Mewtwo','Lugia','Rayquaza','Giratina Altered Forme','Giratina Origin Forme','Dialga','Palkia']
+
+print('------------------------------------------------------------------\n\n')
+print('Recommandations pour la liste des pokemon suivante : \n', pokemon_used)
+print('\nNB : chaque pokemon légendaire est rappelé en tête de liste.\n\n')
+print('------------------------------------------------------------------\n\n')
+for i in range(0,len(pokemon_used)):
+
+  pokemon=pokemon_used[i]
+
+  mask=df_pokemon['Name']==pokemon
+  pokemon_vector = np.array(df_pokemon[mask][['HP','Attack','Defense','Sp. Atk','Sp. Def','Speed']])
+
+  #Récupération des distances et index des 5 plus proches voisins
+  distances, neighbor_index = my_KNN_model.kneighbors(pokemon_vector, n_neighbors=2)
+  #!!! ATTENTION : indices (neighbor_index) retournés sont ceux dans la table construite par le modèle, la correspondance avec la matrice utilisée pour fit est donnée par
+  #      df.index[neighbor_index]
+  #cf. https://stackoverflow.com/questions/45507150/how-to-get-the-actual-index-of-my-dataframe-row-while-getting-topk-nearest-neigh
+
+
+  #Mise sous forme de liste de tuples (index, distance)
+  pokemon_recommended = sorted(list(zip(neighbor_index.squeeze().tolist(), distances.squeeze().tolist())), key=lambda x: x[1])#tri sur la 2ème valeur du tuple (indice, distance)
+
+  print('\n\n==============  Recommandation pour ', pokemon, ' ======================\n')
+  df_rec=df_pokemon[mask]
+  for idx, dist in pokemon_recommended:
+    #print(idx, dist, '--------------------------')
+    #ici on récupère les données du pokemon voisin avec l'index idx retourné par KNNNeighbors qu'il faut convertir en index de df_pokemon_non_lgd
+    #avec l'écriture df_pokemon_non_lgd.index[[idx]], c'est un array que l'on convertit en liste puis on récupère l'occurrence 0 (la seule d'ailleurs)
+    df_i=df_pokemon_non_lgd[df_pokemon_non_lgd.index==list(df_pokemon_non_lgd.index[[idx]])[0]]
+    #print('concat de ', df_rec.index, 'et', df_i.index, '(idx=',idx,')')
+    df_rec=pd.concat([df_rec, df_i])
+    #print(df_i))
+    #print(pdtabulate(df_i))
+    #print(tabulate(df_i))
+    #print (idx, dist, df_i)
+    #print(i,idx)
+  print(pdtabulate(df_rec))
