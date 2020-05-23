@@ -19,15 +19,10 @@ df_pokemon = pd.read_csv("pokemon.csv", delimiter=',')
 
 df_pokemon.shape, df_pokemon.columns
 
-#pbl avec Giratina plus bas. Recherche de Giratina :
-mask=df_pokemon['Name']>'Gi'
-df_pokemon[mask].sort_values('Name').head(6)
-
 """# KNN with Scikit-Learn
 
 Mewtwo, Lugia, Rayquaza, Giratina, Dialga, and Palkia
 
-## 1 Implement the k-NN algorithm using the kaggle Pokemon dataset.
 """
 
 # On prend le modèle KNN Classifier avec k=5 et les paramètres de base (notamment avec une distance euclidienne (minkowski et p=2)) 
@@ -42,14 +37,11 @@ my_KNN_model = NearestNeighbors(n_neighbors=5,
 
 my_KNN_model
 
-"""### Explain how you chose the number of neighbours (k).
 
-Choix arbitraire. Ici 5. Mais cela ne change pas la distance calculée et donc les pokemons restitués par .Neighbors pour la recommandation.
+#Choix de k arbitraire. Ici 5. Mais cela ne change pas la distance calculée et donc les pokemons restitués par .Neighbors pour la recommandation.
 
 ## Model fitting
 
-Use the k-NN algorithm to find the Pokémon closest to each of the legendary Pokémon they're used to using.
-"""
 
 #Le fitting se fait sur les données numériques et sur les pokemon NON LEGENDAIRES pour pouvoir recommander des non légendaires
 df_pokemon_non_lgd = df_pokemon[df_pokemon['Legendary']==False]
@@ -58,10 +50,7 @@ my_KNN_model.fit(df_pokemon_non_lgd[['HP','Attack','Defense','Sp. Atk','Sp. Def'
 
 print(my_KNN_model)
 
-"""## Making recommendation
-
-Make Pokémon recommendations for the champion to use.
-"""
+## Making recommendation
 
 pokemon_used = ['Mewtwo','Lugia','Rayquaza','Giratina Altered Forme','Giratina Origin Forme','Dialga','Palkia']
 
